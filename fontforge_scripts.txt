@@ -1,0 +1,24 @@
+#change all fonts vertical center
+startglyph = 0x2e80
+endglyph = 0x9fff
+
+thisfont =  fontforge.activeFont()
+for i in range(startglyph,endglyph+1):
+        ytop = thisfont[i].boundingBox()[-1] # counted from baseline, excluding descent!
+        ybot = thisfont[i].boundingBox()[1] # same note as above
+        # Calculation method:
+        # Midpoint of entire space = (ascent + descent) / 2
+        # Current midpoint of glyph (counted from baseline) = (ytop + ybot) / 2
+        # Current midpoint of glyph (counted with descent) = (ytop + ybot) / 2 + descent
+        # Vertical translation = midpoint of entire space - current midpoint of glyph (counted with descent)
+        # That is: (ascent + descent) / 2 - ((ytop + ybot) / 2 + descent)
+        # Simplified: (ascent - descent - (ytop + ybot)) / 2
+        translation = (thisfont.ascent - thisfont.descent - (ytop + ybot)) / 2
+        thisfont[i].transform( psMat.translate( 0, translation ))
+
+#UI selection
+startglyph = 0x5de0
+endglyph = 0x5e1f
+fontforge.activeFont().selection.select(("ranges", None), startglyph, endglyph)
+#manual centerinWidth() in right click menu.
+

@@ -1,24 +1,61 @@
-#change all fonts vertical center
-startglyph = 0x2e80
-endglyph = 0x9fff
+import logging
 
-thisfont =  fontforge.activeFont()
-for i in range(startglyph,endglyph+1):
-        ytop = thisfont[i].boundingBox()[-1] # counted from baseline, excluding descent!
-        ybot = thisfont[i].boundingBox()[1] # same note as above
-        # Calculation method:
-        # Midpoint of entire space = (ascent + descent) / 2
-        # Current midpoint of glyph (counted from baseline) = (ytop + ybot) / 2
-        # Current midpoint of glyph (counted with descent) = (ytop + ybot) / 2 + descent
-        # Vertical translation = midpoint of entire space - current midpoint of glyph (counted with descent)
-        # That is: (ascent + descent) / 2 - ((ytop + ybot) / 2 + descent)
-        # Simplified: (ascent - descent - (ytop + ybot)) / 2
-        translation = (thisfont.ascent - thisfont.descent - (ytop + ybot)) / 2
-        thisfont[i].transform( psMat.translate( 0, translation ))
+# 配置日志格式和级别
+logging.basicConfig(filename='c:\log1.txt', level=logging.INFO)
 
-#UI selection
-startglyph = 0x5de0
-endglyph = 0x5e1f
-fontforge.activeFont().selection.select(("ranges", None), startglyph, endglyph)
-#manual centerinWidth() in right click menu.
+# change all fonts vertical center
+startglyph = 11904
+endglyph = 1114370
 
+thisfont = fontforge.activeFont()
+
+# 外层循环每次处理10000个字符的范围
+chunk_size = 10000
+for outer_start in range(startglyph, endglyph + 1, chunk_size):
+    outer_end = min(outer_start + chunk_size - 1, endglyph)
+    for i in range(outer_start, outer_end + 1):
+        try:
+            ytop = thisfont[i].boundingBox()[-1]  # counted from baseline, excluding descent!
+            ybot = thisfont[i].boundingBox()[1]  # same note as above
+            xtop = thisfont[i].boundingBox()[2]
+            xbot = thisfont[i].boundingBox()[0]
+
+            translation_x = (thisfont.ascent - thisfont.descent - (xtop + xbot)) / 2
+            translation_y = (thisfont.ascent - thisfont.descent - (ytop + ybot)) / 2
+            if translation_x != 0 and translation_y != 0:
+                thisfont[i].transform(psMat.translate(translation_x, translation_y))
+                logging.info("%d complete", i)
+            else:
+                logging.info("%d no change", i)
+        except Exception as e:
+            logging.info("%d Error skip", i)
+
+logging.info("all complete.")
+
+
+
+thisfont = fontforge.activeFont()
+i=19982
+ytop = thisfont[i].boundingBox()[-1]  # counted from baseline, excluding descent!
+ybot = thisfont[i].boundingBox()[1]  # same note as above
+xtop = thisfont[i].boundingBox()[2]
+xbot = thisfont[i].boundingBox()[0]
+
+translation_x = (thisfont.ascent - thisfont.descent - (xtop + xbot)) / 2
+translation_y = (thisfont.ascent - thisfont.descent - (ytop + ybot)) / 2
+thisfont[i].transform(psMat.translate(translation_x, translation_y))
+
+
+#fontforge scripts
+select
+
+Open('C:\\Users\\Administrator\\Documents\\LXGWWenKaiMonoGB-Light-bruce.sfd');
+Select(0x2e80,0x110102);
+Rotate(90)
+CenterInWidth();
+
+Select(12296,12315)
+Rotate(-90)
+
+Save();
+Quit(0);

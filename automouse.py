@@ -3,6 +3,7 @@ from tkinter.scrolledtext import ScrolledText
 import pyautogui
 from pynput import keyboard
 import time
+keyinput = keyboard.Controller()
 
 class MousePositionApp:
     def __init__(self, root):
@@ -65,13 +66,17 @@ class MousePositionApp:
                     self.positions.append(position)
                     self.textbox.insert(tk.END, f"{position}; ")
                     self.textbox.yview(tk.END)  # 滚动到最后一行
+                else:
+                    position = f"({key}, -1, 1)"  # 记录按键，y填-1，等待1s
+                    self.positions.append(position)
+                    self.textbox.insert(tk.END, f"{position}; ")
+                    self.textbox.yview(tk.END)  # 滚动到最后一行
             except AttributeError:
                 pass
 
     def execute_action(self):
         if self.running:
             self.stop_detection()
-        
         #执行自定义动作
         #把 textbox 中的内容取出来, 并以string 的形式保存在变量 mouse_position_list 中
         mouse_position_list = self.textbox.get("1.0", tk.END)
@@ -80,16 +85,36 @@ class MousePositionApp:
         print(mouse_position_list)
         coordinates_array = []
         for coord in mouse_position_list.split('; '):
+            print(coord)
             if coord.strip('(); '):
-                x, y, z = map(int, coord.strip('(); ').split(', '))
-                coordinates_array.append((x, y, z))
+                x, y, z = coord.strip('(); ').split(', ')
+                x_str, y_str, z_str = map(str, (x, y, z))
+                coordinates_array.append((x_str, y_str, z_str))
         print(coordinates_array)
+        
+        
+        def press_key(key):
+            if isinstance(key, str):
+                # 如果key是字符串，则尝试获取对应的键名属性
+                key_name = key.split('.')[1] if '.' in key else key
+                keyinput.press(getattr(keyboard.Key, key_name))
+                keyinput.release(getattr(keyboard.Key, key_name))
+            else:
+                # 如果key不是字符串，则直接将其作为按键传递给keyboard.press()
+                keyinput.press(key)
+                keyinput.release(key)
+       
         def move_mouse_and_click(coordinates):
             for coordinate in coordinates:
                 x, y, z = coordinate
-                pyautogui.moveTo(x, y)
-                pyautogui.click()
-                time.sleep(z)
+                if y != '-1':
+                    pyautogui.moveTo(int(x), int(y))
+                    pyautogui.click()
+                    time.sleep(int(z))
+                else:
+                    press_key(x)
+                    time.sleep(int(z))
+
         move_mouse_and_click(coordinates_array)
 
     def on_close(self):
